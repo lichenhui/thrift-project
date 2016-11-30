@@ -33,6 +33,8 @@ public class DiscoverService {
 	private static String serviceNodePath = "/service-node";
 	private static String serviceClassesPath = "/service-class";
 
+	private boolean start = false;
+
 	@Autowired
 	private ZookeeperFactory zookeeperFactory;
 
@@ -40,7 +42,7 @@ public class DiscoverService {
 	private ConnectionPool connectionPool;
 
 	public List<ThriftServerInfo> getServerInfoList() {
-		if (serverInfoList.size() == 0) {
+		if (serverInfoList.size() == 0 && !start) {
 			try {
 				discover();
 			} catch (Exception e) {
@@ -51,7 +53,7 @@ public class DiscoverService {
 	}
 
 	public Map<String, String> getServiceMap() {
-		if (serviceMap.size() == 0) {
+		if (serviceMap.size() == 0 && !start) {
 			try {
 				discover();
 			} catch (Exception e) {
@@ -78,8 +80,8 @@ public class DiscoverService {
 			String className = new String(zkClient.getData().forPath(serviceClassesPath + "/" + serviceClass), Charset.forName("utf-8"));
 			serviceMap.put(serviceClass, className);
 		}
-		connectionPool.initPool();
 		serviceNodeWatcher();
+		start = true;
 	}
 
 	private void serviceNodeWatcher() {
