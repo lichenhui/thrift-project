@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="defaultPattern" value="%d{YYYY-MM-dd HH:mm:ss.SSS} %5p [%t] %c - %m%n" />
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>${defaultPattern}</pattern>
+        </encoder>
+    </appender>
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="Console" />
+        </root>
+    </springProfile>
+    <springProfile name="test,prod">
+        <appender name="RunLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>/opt/logs/thrift-project-client/client.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>/opt/logs/thrift-project-client/client.log.%d{yyyyMMdd}</fileNamePattern>
+            </rollingPolicy>
+            <encoder>
+                <charset>UTF-8</charset>
+                <pattern>${defaultPattern}</pattern>
+            </encoder>
+        </appender>
+        <root level="WARN">
+            <appender-ref ref="RunLog" />
+        </root>
+        <logger name="cn.lichenhui.rpc" level="INFO" additivity="false">
+            <appender-ref ref="Console" />
+        </logger>
+
+    </springProfile>
+</configuration>

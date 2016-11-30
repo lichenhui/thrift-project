@@ -1,0 +1,27 @@
+server:
+  port: 8093
+  contextPath: /thrift
+spring:
+  profiles:
+    active: dev
+  application:
+    name: news-web
+  mvc:
+    staticPathPattern: /static/**
+  thymeleaf:
+    mode: LEGACYHTML5
+    prefix: classpath:/thymeleaf/
+    suffix: .html
+    cache: true
+
+---
+spring:
+  profiles: dev
+
+---
+spring:
+  profiles: test
+
+---
+spring:
+  profiles: prod
