@@ -40,7 +40,7 @@ public class DiscoverService {
 	private ConnectionPool connectionPool;
 
 	public List<ThriftServerInfo> getServerInfoList() {
-		if (serverInfoList == null || serverInfoList.size() == 0) {
+		if (serverInfoList.size() == 0) {
 			try {
 				discover();
 			} catch (Exception e) {
@@ -51,7 +51,7 @@ public class DiscoverService {
 	}
 
 	public Map<String, String> getServiceMap() {
-		if (serviceMap == null || serviceMap.size() == 0) {
+		if (serviceMap.size() == 0) {
 			try {
 				discover();
 			} catch (Exception e) {
@@ -85,6 +85,12 @@ public class DiscoverService {
 	private void serviceNodeWatcher() {
 		pathChildrenCache = new PathChildrenCache(zkClient, serviceNodePath, true);
 		log.info("监听...path:{}", serviceNodePath);
+		try {
+			pathChildrenCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+		} catch (Exception e) {
+			throw new Error("启动服务节点监控错误", e);
+
+		}
 		pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
 			@Override
 			public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
@@ -94,23 +100,21 @@ public class DiscoverService {
 					ChildData data = pathChildrenCacheEvent.getData();
 					ThriftServerInfo serverInfo = getServiceInfo(data);
 					connectionPool.removeServer(serverInfo);
+					serverInfoList.remove(serverInfo);
 					log.info("从连接池删除服务节点:{}", serverInfo);
+					log.info("删除后服务节点列表:{}", serverInfoList);
 				}
 				if (type == PathChildrenCacheEvent.Type.CHILD_ADDED) {
 					ChildData data = pathChildrenCacheEvent.getData();
 					ThriftServerInfo serverInfo = getServiceInfo(data);
 					connectionPool.addServer(serverInfo);
 					log.info("从连接池增加服务节点:{}", serverInfo);
+					serverInfoList.add(serverInfo);
+					log.info("增加后服务节点列表:{}", serverInfoList);
 				}
 				pathChildrenCache.rebuild();
 			}
 		});
-		try {
-			pathChildrenCache.start();
-		} catch (Exception e) {
-			throw new Error("启动服务节点监控错误", e);
-
-		}
 	}
 
 	private ThriftServerInfo getServiceInfo(ChildData data) {
