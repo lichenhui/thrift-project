@@ -83,7 +83,7 @@ public class DiscoverService {
 
 	private void serviceNodeWatcher() {
 		pathChildrenCache = new PathChildrenCache(zkClient, serviceNodePath, true);
-		log.info("监听...");
+		log.info("监听...path:{}", serviceNodePath);
 		pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
 			@Override
 			public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
@@ -91,23 +91,27 @@ public class DiscoverService {
 				log.info("zookeeper event type:{}", type.name());
 				if (type == PathChildrenCacheEvent.Type.CHILD_REMOVED) {
 					ChildData data = pathChildrenCacheEvent.getData();
-					ThriftServerInfo serverInfo = getSeviceInfo(data);
+					ThriftServerInfo serverInfo = getServiceInfo(data);
 					connectionPool.removeServer(serverInfo);
 					log.info("从连接池删除服务节点:{}", serverInfo);
-					serviceNodeWatcher();
 				}
 				if (type == PathChildrenCacheEvent.Type.CHILD_ADDED) {
 					ChildData data = pathChildrenCacheEvent.getData();
-					ThriftServerInfo serverInfo = getSeviceInfo(data);
+					ThriftServerInfo serverInfo = getServiceInfo(data);
 					connectionPool.addServer(serverInfo);
 					log.info("从连接池增加服务节点:{}", serverInfo);
-					serviceNodeWatcher();
 				}
+				pathChildrenCache.rebuild();
 			}
 		});
+		try {
+			pathChildrenCache.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
-	private ThriftServerInfo getSeviceInfo(ChildData data) {
+	private ThriftServerInfo getServiceInfo(ChildData data) {
 		String[] arr = data.getPath().split("/");
 		String delHost = arr[arr.length - 1];
 		String[] hostInfo = delHost.split(":");

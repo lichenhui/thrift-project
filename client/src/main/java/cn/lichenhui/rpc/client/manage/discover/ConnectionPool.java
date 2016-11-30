@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +38,7 @@ public class ConnectionPool {
 		return pool.getConnection();
 	}
 
+	@PostConstruct
 	public void initPool() throws Exception {
 		if (pool != null) {
 			return;
