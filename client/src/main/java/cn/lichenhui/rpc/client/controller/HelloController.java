@@ -1,11 +1,9 @@
 package cn.lichenhui.rpc.client.controller;
 
-import cn.lichenhui.rpc.client.manage.discover.ConnectionPool;
+import cn.lichenhui.rpc.client.manage.ServiceClientFactory;
 import cn.lichenhui.rpc.thrift.service.IHelloService;
-import com.wmz7year.thrift.pool.connection.ThriftConnection;
 import com.wmz7year.thrift.pool.exception.ThriftConnectionPoolException;
 import org.apache.thrift.TException;
-import org.apache.thrift.TServiceClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,20 +18,19 @@ import java.util.Map;
 public class HelloController {
 
 	@Autowired
-	private ConnectionPool pool;
+	private ServiceClientFactory clientFactory;
 
 	@RequestMapping(value = "/sum", method = RequestMethod.GET)
 	public ModelAndView sum(@RequestParam int a, @RequestParam int b) {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 
-		ThriftConnection<TServiceClient> connection = null;
+
+		IHelloService.Client helloServiceClient = null;
 		try {
-			connection = pool.getConnection();
+			helloServiceClient = clientFactory.getClient("helloService", IHelloService.Client.class);
 		} catch (ThriftConnectionPoolException e) {
 			e.printStackTrace();
 		}
-
-		IHelloService.Client helloServiceClient = connection.getClient("helloService", IHelloService.Client.class);
 		int sum = 0;
 		try {
 			sum = helloServiceClient.sum(a, b);
