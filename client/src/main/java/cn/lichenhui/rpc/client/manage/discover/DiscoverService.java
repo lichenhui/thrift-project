@@ -44,7 +44,7 @@ public class DiscoverService {
 			try {
 				discover();
 			} catch (Exception e) {
-				e.printStackTrace();
+				throw new Error("服务发现发生错误", e);
 			}
 		}
 		return serverInfoList;
@@ -55,13 +55,14 @@ public class DiscoverService {
 			try {
 				discover();
 			} catch (Exception e) {
-				e.printStackTrace();
+				throw new Error("服务发现发生错误", e);
 			}
 		}
 		return serviceMap;
 	}
 
 	private void discover() throws Exception {
+		log.info("服务发现...");
 		if (zkClient == null) {
 			this.zkClient = zookeeperFactory.getZkClient();
 		}
@@ -71,12 +72,12 @@ public class DiscoverService {
 			ThriftServerInfo serverInfo = new ThriftServerInfo(arr[0], Integer.valueOf(arr[1]));
 			serverInfoList.add(serverInfo);
 		}
+		log.info("服务节点列表:{}", serverInfoList);
 		List<String> serviceClasses = zkClient.getChildren().forPath(serviceClassesPath);
 		for (String serviceClass : serviceClasses) {
 			String className = new String(zkClient.getData().forPath(serviceClassesPath + "/" + serviceClass), Charset.forName("utf-8"));
 			serviceMap.put(serviceClass, className);
 		}
-		log.info("初始化连接池...");
 		connectionPool.initPool();
 		serviceNodeWatcher();
 	}
@@ -107,7 +108,8 @@ public class DiscoverService {
 		try {
 			pathChildrenCache.start();
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new Error("启动服务节点监控错误", e);
+
 		}
 	}
 
